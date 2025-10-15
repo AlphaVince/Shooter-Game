@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🚀 Space Shooter Pro Edition</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Share+Tech+Mono&display=swap');
+*{box-sizing:border-box;}
+body{margin:0;background:radial-gradient(ellipse at center,#000010 0%,#000000 80%);color:#e0e6f3;font-family:'Share Tech Mono',monospace;overflow-x:hidden;}
+h1,h2,h3,h4{font-family:'Orbitron',sans-serif;font-weight:700;color:#50e3c2;margin-bottom:0.2em;text-shadow:0 0 10px #50e3c2;}
+p{font-size:1rem;line-height:1.3;color:#a0a8bf;}
+#loginScreen,#registerScreen,#mainMenu,#hud,#credits,#adminLogin,#adminPanel,#updateLogWindow{max-width:800px;margin:40px auto;padding:30px;border-radius:12px;background:rgba(8,16,32,0.9);box-shadow:0 0 40px #50e3c2;}
+#mainMenu,#hud,#credits,#adminLogin,#adminPanel,#updateLogWindow,#registerScreen{display:none;}
+.visible{display:block!important;}
+input[type="text"],input[type="password"],input[type="number"]{background:#0a1326;border:2px solid #50e3c2;border-radius:6px;color:#50e3c2;padding:8px 12px;font-family:'Share Tech Mono',monospace;font-size:1rem;outline:none;width:100%;max-width:300px;transition:border-color 0.3s;}
+input:focus{border-color:#00ffbb;}
+button{background:linear-gradient(145deg,#007961,#00b894);border:none;color:#def9ef;font-weight:700;font-family:'Orbitron',sans-serif;font-size:1.1rem;padding:12px 26px;margin:10px 8px 10px 0;border-radius:12px;box-shadow:0 0 15px #00ffbb;cursor:pointer;transition:background 0.4s ease;}
+button:hover{background:linear-gradient(145deg,#00b894,#00ffd1);box-shadow:0 0 20px #00ffd1;}
+button:disabled{opacity:0.5;cursor:not-allowed;}
+#gameCanvas{display:block;margin:30px auto;background:transparent;border:2px solid #50e3c2;border-radius:14px;box-shadow:0 0 50px #50e3c2;}
+#hud{text-align:left;display:flex;justify-content:space-between;align-items:center;font-size:1.3rem;color:#00ffd1;text-shadow:0 0 5px #00ffd1;}
+#leaderboardList{list-style:none;padding-left:0;max-width:400px;margin:15px auto 0;}
+#leaderboardList li{border-bottom:1px solid #004f3f;padding:8px 0;font-weight:600;letter-spacing:0.05em;}
+#credits p{font-size:1.1rem;}
+.error-msg{color:#ff5555;font-weight:700;margin-top:8px;font-family:'Share Tech Mono',monospace;}
+table{border-collapse:collapse;width:100%;}
+table,th,td{border:1px solid #50e3c2;}
+th,td{padding:8px;text-align:center;color:#00ffd1;}
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="loginScreen" class="visible">
+<h1>🚀 Space Shooter Pro - Login</h1>
+<label>Benutzername:</label><br>
+<input type="text" id="loginUsername" placeholder="Name"><br>
+<label>Passwort:</label><br>
+<input type="password" id="loginPassword" placeholder="Passwort"><br>
+<button onclick="login()">Login</button>
+<button onclick="showRegister()">Registrieren</button>
+<p id="loginMsg" class="error-msg"></p>
+</div>
+
+<!-- Registrierung -->
+<div id="registerScreen">
+<h1>Registrieren</h1>
+<label>Benutzername:</label><br>
+<input type="text" id="regUsername" placeholder="Name"><br>
+<label>Passwort:</label><br>
+<input type="password" id="regPassword" placeholder="Passwort"><br>
+<button onclick="register()">Registrieren</button>
+<button onclick="showLogin()">Zurück zum Login</button>
+<p id="registerMsg" class="error-msg"></p>
+</div>
+
+<!-- Hauptmenü -->
+<div id="mainMenu">
+<h1>🚀 Space Shooter Pro</h1>
+<p id="welcomeText"></p>
+<button onclick="startGame()">Spiel starten</button>
+<button onclick="showUpdateLog()">Update Log</button>
+<button onclick="showCredits()">Credits</button>
+<button onclick="showAdminLogin()">Admin Bereich</button>
+<button onclick="logout()">Abmelden</button>
+<h2>🏆 Top 5 Leaderboard</h2>
+<ul id="leaderboardList"></ul>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+<p><strong>Punkte:</strong> <span id="scoreDisplay">0</span></p>
+<p><strong>Leben:</strong> <span id="livesDisplay">5</span></p>
+<button onclick="endGame()">Spiel beenden</button>
+</div>
+
+<!-- Spiel Canvas -->
+<canvas id="gameCanvas" width="800" height="600" style="display:none;"></canvas>
+
+<!-- Credits -->
+<div id="credits">
+<h2>Credits</h2>
+<p><strong>Adony:</strong> Idee, Founder</p>
+<p><strong>Vince:</strong> Programmierung, Founder</p>
+<p><strong>Herr Wabner:</strong> Partner</p>
+<button onclick="hideCredits()">Zurück</button>
+</div>
+
+<!-- Admin Login -->
+<div id="adminLogin">
+<h2>Admin Passwort</h2>
+<input type="password" id="adminPasswordInput" placeholder="Admin Passwort">
+<p id="adminLoginMsg" class="error-msg"></p>
+<button onclick="checkAdminPassword()">Einloggen</button>
+<button onclick="hideAdminLogin()">Abbrechen</button>
+</div>
+
+<!-- Admin Panel -->
+<div id="adminPanel">
+<h2>Admin Bereich</h2>
+<section>
+<h3>Leaderboard Verwaltung</h3>
+<table id="adminLeaderboardTable">
+<thead><tr><th>Rang</th><th>Name</th><th>Punkte</th><th>Aktionen</th></tr></thead>
+<tbody></tbody>
+</table>
+<button onclick="resetLeaderboard()">Leaderboard zurücksetzen</button>
+</section>
+
+<section style="margin-top:30px;">
+<h3>Spieler Verwaltung</h3>
+<table id="adminUsersTable">
+<thead><tr><th>Name</th><th>Rolle</th><th>Aktionen</th></tr></thead>
+<tbody></tbody>
+</table>
+<button onclick="createAdminUser()">Admin erstellen</button>
+</section>
+
+<section style="margin-top:30px;">
+<h3>Update Logs</h3>
+<ul id="adminUpdateLog"></ul>
+<form id="adminUpdateForm">
+<input type="text" id="updateVersion" placeholder="Version" required>
+<input type="text" id="updateDescription" placeholder="Beschreibung" required>
+<button type="submit">Update hinzufügen</button>
+</form>
+</section>
+
+<button onclick="logoutAdmin()">Admin Logout</button>
+</div>
+
+<!-- Update Log für Spieler -->
+<div id="updateLogWindow">
+<h2>Update Log</h2>
+<ul id="playerUpdateLog"></ul>
+<button onclick="closeUpdateLog()">Schließen</button>
+</div>
+
+<script>
+"use strict";
+
+// --- Daten ---
+let currentUser=null;
+let accounts=[];
+let scores=[];
+let updateLogs=[];
+
+// Owner Account
+if(!localStorage.getItem("ownerCreated")){
+    accounts.push({username:"vince.walle",password:"Rabesocke2022",role:"owner"});
+    localStorage.setItem("accounts",JSON.stringify(accounts));
+    localStorage.setItem("ownerCreated","true");
+}
+
+// --- Utils ---
+function saveAccounts(){localStorage.setItem("accounts",JSON.stringify(accounts));}
+function loadAccounts(){let ac=localStorage.getItem("accounts");accounts=ac?JSON.parse(ac):[];}
+function saveScores(){localStorage.setItem("scores",JSON.stringify(scores));}
+function loadScores(){let s=localStorage.getItem("scores");scores=s?JSON.parse(s):[];}
+function saveUpdateLogs(){localStorage.setItem("updateLogs",JSON.stringify(updateLogs));}
+function loadUpdateLogs(){let ul=localStorage.getItem("updateLogs");updateLogs=ul?JSON.parse(ul):[];}
+function show(el){el.style.display="block";}
+function hide(el){el.style.display="none";}
+
+// --- Anzeige Login/Register ---
+function showRegister(){hide(loginScreen);show(registerScreen);}
+function showLogin(){hide(registerScreen);show(loginScreen);}
+
+// --- Registrierung ---
+function register(){
+    let u=document.getElementById("regUsername").value.trim();
+    let p=document.getElementById("regPassword").value.trim();
+    if(!u||!p){document.getElementById("registerMsg").textContent="Bitte alles ausfüllen!";return;}
+    loadAccounts();
+    if(accounts.find(a=>a.username===u)){document.getElementById("registerMsg").textContent="Benutzername existiert!";return;}
+    accounts.push({username:u,password:p,role:"player"});
+    saveAccounts();
+    currentUser={username:u,role:"player"};
+    hide(registerScreen);show(mainMenu);
+    document.getElementById("welcomeText").textContent=`Willkommen, ${currentUser.username}`;
+}
+
+// --- Login ---
+function login(){
+    let u=document.getElementById("loginUsername").value.trim();
+    let p=document.getElementById("loginPassword").value.trim();
+    loadAccounts();
+    let acc=accounts.find(a=>a.username===u && a.password===p);
+    if(acc){currentUser=acc;hide(loginScreen);show(mainMenu);document.getElementById("welcomeText").textContent=`Willkommen, ${currentUser.username}`;} 
+    else document.getElementById("loginMsg").textContent="Benutzername oder Passwort falsch!";
+}
+
+// --- Logout ---
+function logout(){currentUser=null;hide(mainMenu);show(loginScreen);}
+
+// --- Admin Login ---
+function showAdminLogin(){if(currentUser&&(currentUser.role==="admin"||currentUser.role==="owner")){hide(mainMenu);show(adminLogin);}}
+function hideAdminLogin(){hide(adminLogin);show(mainMenu);}
+function checkAdminPassword(){
+    let p=document.getElementById("adminPasswordInput").value;
+    if(currentUser&&(currentUser.role==="admin"||currentUser.role==="owner")&&currentUser.password===p){document.getElementById("adminPasswordInput").value="";hide(adminLogin);show(adminPanel);renderAdminLeaderboard();renderAdminUsers();renderAdminUpdateLog();}
+    else document.getElementById("adminLoginMsg").textContent="Falsches Passwort!";
+}
+function logoutAdmin(){hide(adminPanel);show(mainMenu);}
+
+// --- Leaderboard ---
+function renderLeaderboard(){
+    loadScores();
+    const list=document.getElementById("leaderboardList"); list.innerHTML="";
+    if(scores.length===0){list.innerHTML="<li>Kein Eintrag</li>"; return;}
+    scores.slice(0,5).forEach((e,i)=>{const li=document.createElement("li"); li.textContent=`${i+1}. ${e.name} - ${e.score} Punkte`; list.appendChild(li);});
+}
+function renderAdminLeaderboard(){
+    const tbody=document.querySelector("#adminLeaderboardTable tbody");tbody.innerHTML="";
+    if(scores.length===0){tbody.innerHTML="<tr><td colspan='4'>Keine Einträge</td></tr>";return;}
+    scores.forEach((e,i)=>{
+        const tr=document.createElement("tr");
+        tr.innerHTML=`<td>${i+1}</td><td>${e.name}</td><td>${e.score}</td><td><button onclick="deleteScore(${i})">Löschen</button></td>`;
+        tbody.appendChild(tr);
+    });
+}
+function deleteScore(idx){scores.splice(idx,1);saveScores();renderLeaderboard();renderAdminLeaderboard();}
+function resetLeaderboard(){scores=[];saveScores();renderLeaderboard();renderAdminLeaderboard();}
+
+// --- Admin Users ---
+function renderAdminUsers(){
+    loadAccounts();
+    const tbody=document.querySelector("#adminUsersTable tbody");tbody.innerHTML="";
+    accounts.forEach((a,i)=>{
+        const tr=document.createElement("tr");
+        tr.innerHTML=`<td>${a.username}</td><td>${a.role}</td><td>${a.role!=="owner"?`<button onclick="deleteUser(${i})">Löschen</button>`:""} </td>`;
+        tbody.appendChild(tr);
+    });
+}
+function deleteUser(idx){if(confirm("Benutzer löschen?")){accounts.splice(idx,1);saveAccounts();renderAdminUsers();}}
+function createAdminUser(){let name=prompt("Admin Benutzername?");if(!name)return; let pw=prompt("Passwort?");if(!pw)return; accounts.push({username:name,password:pw,role:"admin"}); saveAccounts(); renderAdminUsers();}
+
+// --- Update Log ---
+function renderAdminUpdateLog(){
+    loadUpdateLogs();
+    const ul=document.getElementById("adminUpdateLog");ul.innerHTML="";
+    updateLogs.forEach((u,i)=>{const li=document.createElement("li"); li.innerHTML=`<b>${u.version}</b>: ${u.description} <button onclick="deleteUpdate(${i})">Löschen</button>`; ul.appendChild(li);});
+}
+function deleteUpdate(idx){updateLogs.splice(idx,1);saveUpdateLogs();renderAdminUpdateLog();renderPlayerUpdateLog();}
+document.getElementById("adminUpdateForm").addEventListener("submit",e=>{
+    e.preventDefault();
+    let v=document.getElementById("updateVersion").value.trim();
+    let d=document.getElementById("updateDescription").value.trim();
+    if(!v||!d)return alert("Alles ausfüllen!");
+    updateLogs.unshift({version:v,description:d});
+    saveUpdateLogs(); renderAdminUpdateLog(); renderPlayerUpdateLog();
+    document.getElementById("updateVersion").value=""; document.getElementById("updateDescription").value="";
+});
+function renderPlayerUpdateLog(){
+    loadUpdateLogs();
+    const ul=document.getElementById("playerUpdateLog");ul.innerHTML="";
+    updateLogs.forEach(u=>{const li=document.createElement("li");li.textContent=`${u.version}: ${u.description}`;ul.appendChild(li);});
+}
+function showUpdateLog(){renderPlayerUpdateLog();show(updateLogWindow);}
+function closeUpdateLog(){hide(updateLogWindow);}
+
+// --- Spiel ---
+const canvas=document.getElementById("gameCanvas"); 
+const ctx=canvas.getContext("2d");
+let player={x:400,y:550,width:30,height:30,speed:5}; 
+let bullets=[], enemies=[], lastShot=0, spawnTimer=0;
+let score=0, lives=5, fireRate=300, gameOver=false, keys={};
+
+document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
+document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+
+function startGame(){
+    hide(mainMenu); show(hud); show(canvas);
+    score=0; gameOver=false; bullets=[]; enemies=[]; lastShot=0; spawnTimer=0;
+    updateHUD();
+    gameLoop();
+}
+
+function endGame(){
+    if(!gameOver){
+        gameOver=true; 
+        alert(`Game Over! Dein Score: ${score}`);
+        scores.push({name:currentUser.username,score}); 
+        saveScores(); 
+        hide(hud); hide(canvas); 
+        show(mainMenu); 
+        renderLeaderboard();
+    }
+}
+
+function updateHUD(){document.getElementById("scoreDisplay").textContent=score; document.getElementById("livesDisplay").textContent=lives;}
+
+function gameLoop(){
+    if(gameOver) return;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // Player Movement
+    if(keys["a"] && player.x>0)player.x-=player.speed;
+    if(keys["d"] && player.x<canvas.width)player.x+=player.speed;
+    if(keys["w"] && player.y>0)player.y-=player.speed;
+    if(keys["s"] && player.y<canvas.height)player.y+=player.speed;
+
+    // Shooting
+    if(keys[" "] && Date.now()-lastShot>fireRate){bullets.push({x:player.x,y:player.y-15}); lastShot=Date.now();}
+
+    ctx.fillStyle="#00ffbb";
+    ctx.beginPath(); ctx.moveTo(player.x,player.y-15); ctx.lineTo(player.x-15,player.y+15); ctx.lineTo(player.x+15,player.y+15); ctx.closePath(); ctx.fill();
+
+    // Bullets
+    ctx.fillStyle="#ffff00";
+    bullets.forEach((b,bi)=>{b.y-=8; ctx.fillRect(b.x-2,b.y-10,4,10); if(b.y<0) bullets.splice(bi,1);});
+
+    // Gegner
+    spawnTimer++;
+    if(spawnTimer>60){spawnTimer=0;if(enemies.length<5)enemies.push({x:Math.random()*canvas.width,y:-20,radius:15,speed:1+Math.random()*1.5});}
+    ctx.fillStyle="#ff5555";
+    enemies.forEach((e,ei)=>{
+        e.y+=e.speed; ctx.beginPath(); ctx.arc(e.x,e.y,e.radius,0,2*Math.PI); ctx.fill();
+        // Collision Player
+        if(Math.abs(e.x-player.x)<15 && Math.abs(e.y-player.y)<15){lives--;updateHUD();enemies.splice(ei,1);if(lives<=0)endGame();}
+        // Collision Bullets
+        bullets.forEach((b,bi)=>{if(Math.abs(b.x-e.x)<15 && Math.abs(b.y-e.y)<15){score+=10;updateHUD();bullets.splice(bi,1);enemies.splice(ei,1);}});
+    });
+
+    requestAnimationFrame(gameLoop);
+}
+
+// --- Load data on start ---
+loadAccounts(); loadScores(); loadUpdateLogs(); renderLeaderboard();
+</script>
+</body>
+</html>
